@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doge Whale Game - Enhanced</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #4169E1, #000080);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: rgba(0, 0, 128, 0.7);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping for smaller screens */
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            margin-right: 20px; /* Space for buttons */
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .coin-display {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+
+        .coin-icon {
+            width: 20px;
+            height: 20px;
+            background-color: gold;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-button, .game-control-button {
+            background-color: rgba(65, 105, 225, 0.7);
+            border: 2px solid #87CEEB;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .nav-button:hover, .game-control-button:hover {
+            background-color: rgba(135, 206, 235, 0.7);
+            transform: scale(1.05);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background-color: rgba(30, 144, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 128, 0.85); /* Darker for better readability */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .overlay h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .overlay p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        .button, .overlay .button { /* Ensure overlay buttons are also styled */
+            background-color: #4169E1;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            margin-top: 10px; /* Spacing for buttons in overlays */
+        }
+
+        .button:hover, .overlay .button:hover {
+            background-color: #87CEEB;
+            transform: scale(1.05);
+        }
+        .button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 5; /* Above canvas but below overlays */
+        }
+
+        .bar-container {
+            width: 200px;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #health-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #FF4500, #FF8C00);
+            transition: width 0.3s;
+        }
+
+        #power-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #4169E1, #00BFFF);
+            transition: width 0.3s;
+        }
+
+        #score-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            z-index: 5;
+        }
+
+        #combo-display {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            font-size: 24px;
+            color: gold;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 5;
+        }
+
+        #power-up-notification {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 15; /* Above everything */
+        }
+
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 20px;
+            z-index: 5;
+        }
+
+        .mobile-button {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #combat-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 20px;
+            z-index: 5;
+        }
+
+        .combat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #combat-fire {
+            background-color: rgba(255, 69, 0, 0.7);
+        }
+
+        #combat-special {
+            background-color: rgba(65, 105, 225, 0.7);
+        }
+
+        #orientation-toggle {
+            position: fixed; /* Keep it on screen always */
+            bottom: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 20; /* Above everything */
+        }
+
+        .vertical #game-container {
+            width: 400px;
+            height: 600px;
+        }
+        .vertical #mobile-controls {
+            /* Adjust if needed for vertical layout */
+        }
+
+
+        .background-particle {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float var(--duration) linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh);
+            }
+            100% {
+                transform: translateY(-100px);
+            }
+        }
+
+        .cloud {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: drift 30s linear infinite;
+        }
+
+        @keyframes drift {
+            0% {
+                transform: translateX(-100px);
+            }
+            100% {
+                transform: translateX(100vw);
+            }
+        }
+
+        .water-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230099ff" fill-opacity="0.5" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-size: cover;
+            animation: wave 10s linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes wave {
+            0% {
+                background-position-x: 0;
+            }
+            100% {
+                background-position-x: 1000px;
+            }
+        }
+
+        #cloud-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Store Overlay Styles */
+        #store-overlay .store-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            max-width: 400px;
+        }
+        #store-overlay .store-item span {
+            margin-right: 10px;
+        }
+
+        /* Leaderboard Styles */
+        #leaderboard-overlay ol {
+            list-style-type: decimal;
+            padding-left: 40px;
+            width: 80%;
+            max-width: 400px;
+        }
+        #leaderboard-overlay li {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #leaderboard-overlay li span:first-child {
+            margin-right: auto;
+            padding-right: 10px;
+        }
+
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000030;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 24px;
+        }
+
+
+        @media (max-width: 768px) {
+            #game-container {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+
+            header {
+                padding: 5px 10px;
+                font-size: 14px; /* Reduce overall header font */
+            }
+             h1 {
+                font-size: 16px; /* Smaller title on mobile */
+                margin-bottom: 5px; /* Space if nav buttons wrap */
+            }
+            .nav-buttons {
+                flex-basis: 100%; /* Allow nav buttons to take full width if they wrap */
+                justify-content: center; /* Center them if they wrap */
+                margin-top: 5px;
+            }
+            .nav-button, .game-control-button {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+
+            #hud {
+                top: 5px;
+                left: 5px;
+            }
+
+            .bar-container {
+                width: 120px; /* Smaller bars */
+                height: 12px;
+            }
+
+            #score-display {
+                font-size: 20px;
+            }
+
+            #combo-display {
+                font-size: 16px;
+                top: 30px;
+            }
+
+            .mobile-button, .combat-button {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            #orientation-toggle {
+                bottom: 70px; /* Move up to avoid overlap with mobile controls */
+                left: 10px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div id="preloader">Loading Game Assets...</div>
+
+    <header>
+        <h1>Doge Whale Game</h1>
+        <div class="user-info">
+            <span>Guest</span>
+            <div class="coin-display">
+                <div class="coin-icon">$</div>
+                <span id="coin-count">0</span>
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button class="game-control-button" id="new-game-button">New Game</button>
+            <button class="game-control-button" id="pause-resume-button">Pause</button>
+            <button class="nav-button" id="store-button">Store</button>
+            <button class="nav-button" id="leaderboard-button">Leaderboard</button>
+        </div>
+    </header>
+
+    <main>
+        <div id="game-container">
+            <canvas id="game-canvas"></canvas>
+
+            <div id="hud">
+                <div class="bar-container">
+                    <div id="health-bar"></div>
+                </div>
+                <div class="bar-container">
+                    <div id="power-bar"></div>
+                </div>
+            </div>
+
+            <div id="score-display">0</div>
+            <div id="combo-display">Combo x1</div>
+            <div id="power-up-notification"></div>
+
+            <div id="mobile-controls">
+                <div class="mobile-button" id="mobile-up"><i class="fas fa-arrow-up"></i></div>
+                <div class="mobile-button" id="mobile-down"><i class="fas fa-arrow-down"></i></div>
+            </div>
+
+            <div id="combat-controls">
+                <div class="combat-button" id="combat-fire"><i class="fas fa-bolt"></i></div>
+                <div class="combat-button" id="combat-special"><i class="fas fa-star"></i></div>
+            </div>
+
+            <div class="overlay active" id="start-overlay">
+                <h2>Doge Whale Game</h2>
+                <p>Navigate through pipes and defeat enemy whales! Collect coins and upgrade your whale!</p>
+                <button class="button" id="start-game-button">Start Game</button>
+                 <button class="button" id="how-to-play-button-intro">How to Play</button>
+            </div>
+
+            <div class="overlay" id="game-over-overlay">
+                <h2>Game Over</h2>
+                <p>Your score: <span id="final-score">0</span></p>
+                <p>Coins collected this round: <span id="round-coins">0</span></p>
+                <button class="button" id="restart-button">Play Again</button>
+                <button class="button" id="submit-score-button" style="display:none;">Submit High Score</button>
+            </div>
+
+            <div class="overlay" id="pause-overlay">
+                <h2>Paused</h2>
+                <p>Take a break!</p>
+                <button class="button" id="resume-game-button">Resume Game</button>
+            </div>
+
+            <div class="overlay" id="store-overlay">
+                <h2>Whale Upgrades</h2>
+                <p>Spend your coins!</p>
+                <div class="store-item">
+                    <span>Max Health (<span id="health-upgrade-level">Lv 1</span>): <span id="health-upgrade-cost">100</span> coins</span>
+                    <button class="button" id="upgrade-health-button">Upgrade</button>
+                </div>
+                <div class="store-item">
+                    <span>Damage (<span id="damage-upgrade-level">Lv 1</span>): <span id="damage-upgrade-cost">150</span> coins</span>
+                    <button class="button" id="upgrade-damage-button">Upgrade</button>
+                </div>
+                <div class="store-item">
+                    <span>Fire Rate (<span id="firerate-upgrade-level">Lv 1</span>): <span id="firerate-upgrade-cost">200</span> coins</span>
+                    <button class="button" id="upgrade-firerate-button">Upgrade</button>
+                </div>
+                <button class="button" id="close-store-button">Close Store</button>
+            </div>
+
+            <div class="overlay" id="leaderboard-overlay">
+                <h2>High Scores</h2>
+                <ol id="high-scores-list"></ol>
+                <button class="button" id="close-leaderboard-button">Close</button>
+            </div>
+
+             <div class="overlay" id="how-to-play-overlay">
+                <h2>How to Play</h2>
+                <p><strong>Objective:</strong> Survive as long as possible, defeat enemy whales, and get a high score!</p>
+                <p><strong>Controls:</strong></p>
+                <ul>
+                    <li><strong>Arrow Up / Space / Tap Left Up Button:</strong> Move Up</li>
+                    <li><strong>Arrow Down / Tap Left Down Button:</strong> Move Down (Fast Fall)</li>
+                    <li><strong>F / Tap Right Bolt Button:</strong> Fire Projectile</li>
+                    <li><strong>S / Tap Right Star Button:</strong> Use Special Attack (needs 50 Power)</li>
+                    <li><strong>P:</strong> Pause/Resume Game</li>
+                </ul>
+                <p>Collect coins to upgrade your whale in the Store!</p>
+                <button class="button" id="close-how-to-play-button">Got it!</button>
+            </div>
+
+
+            <div class="water-wave"></div>
+            <div id="cloud-container"></div>
+        </div>
+    </main>
+
+    <div id="orientation-toggle">
+        <i class="fas fa-sync-alt"></i> <!-- Changed icon for clarity -->
+    </div>
+
+    <script>
+        // --- ENHANCEMENT START: Preloader ---
+        const preloader = document.getElementById('preloader');
+        // --- ENHANCEMENT END: Preloader ---
+
+        // Animation scripts (unchanged, kept for brevity in this diff, but they are part of the full code)
+        const mainWhaleSwimFrames = [{tailAngle: -15,finOffset: -2,bubbleCount: 1},{tailAngle: -5,finOffset: -1,bubbleCount: 0},{tailAngle: 0,finOffset: 0,bubbleCount: 0},{tailAngle: 5,finOffset: 1,bubbleCount: 2},{tailAngle: 15,finOffset: 2,bubbleCount: 1},{tailAngle: 5,finOffset: 1,bubbleCount: 0},{tailAngle: 0,finOffset: 0,bubbleCount: 0},{tailAngle: -5,finOffset: -1,bubbleCount: 1}];
+        function animateMainWhaleSwim(ctx, whale, frameCount) {ctx.save();ctx.translate(whale.x + whale.width / 2, whale.y + whale.height / 2);const frameIndex = Math.floor(frameCount / 8) % mainWhaleSwimFrames.length;const frame = mainWhaleSwimFrames[frameIndex];ctx.drawImage(playerImage, -whale.width / 2, -whale.height / 2, whale.width, whale.height);ctx.save();ctx.translate(-whale.width / 2, 0);ctx.rotate(frame.tailAngle * Math.PI / 180);ctx.fillStyle = '#FFD700';ctx.beginPath();ctx.moveTo(0, 0);ctx.lineTo(-10, -10);ctx.lineTo(-15, 0);ctx.lineTo(-10, 10);ctx.closePath();ctx.fill();ctx.restore();ctx.fillStyle = '#FFD700';ctx.beginPath();ctx.moveTo(0, -whale.height / 2);ctx.lineTo(5, -whale.height / 2 - 8 + frame.finOffset);ctx.lineTo(10, -whale.height / 2);ctx.closePath();ctx.fill();if (frame.bubbleCount > 0) {ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';for (let i = 0; i < frame.bubbleCount; i++) {const bubbleX = -whale.width / 2 - 10 - (i * 5);const bubbleY = (Math.random() - 0.5) * 10;const bubbleSize = 2 + Math.random() * 3;ctx.beginPath();ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);ctx.fill();}}ctx.restore();}
+        const mainWhaleAttackFrames = [{mouthOpen: 0,eyeSize: 1,glowIntensity: 0},{mouthOpen: 5,eyeSize: 1.2,glowIntensity: 0.2},{mouthOpen: 10,eyeSize: 1.5,glowIntensity: 0.5},{mouthOpen: 15,eyeSize: 1.8,glowIntensity: 0.8},{mouthOpen: 20,eyeSize: 2,glowIntensity: 1},{mouthOpen: 15,eyeSize: 1.8,glowIntensity: 0.8},{mouthOpen: 10,eyeSize: 1.5,glowIntensity: 0.5},{mouthOpen: 5,eyeSize: 1.2,glowIntensity: 0.2}];
+        function animateMainWhaleAttack(ctx, whale, frameCount, isAttacking) {if (!isAttacking) {animateMainWhaleSwim(ctx, whale, frameCount);return;}ctx.save();ctx.translate(whale.x + whale.width / 2, whale.y + whale.height / 2);const frameIndex = Math.floor(frameCount / 4) % mainWhaleAttackFrames.length;const frame = mainWhaleAttackFrames[frameIndex];if (frame.glowIntensity > 0) {ctx.save();ctx.globalAlpha = frame.glowIntensity * 0.7;ctx.shadowBlur = 15 * frame.glowIntensity;ctx.shadowColor = '#FFD700';ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';ctx.beginPath();ctx.arc(0, 0, whale.width * 0.7, 0, Math.PI * 2);ctx.fill();ctx.restore();}ctx.drawImage(playerImage, -whale.width / 2, -whale.height / 2, whale.width, whale.height);ctx.fillStyle = '#FF4500';ctx.beginPath();ctx.arc(whale.width / 2 - 5, 0, 5 + frame.mouthOpen, 0, Math.PI * 2);ctx.fill();ctx.fillStyle = '#FF0000';ctx.beginPath();ctx.arc(whale.width / 4, -whale.height / 4, 3 * frame.eyeSize, 0, Math.PI * 2);ctx.fill();ctx.beginPath();ctx.arc(whale.width / 4, whale.height / 4, 3 * frame.eyeSize, 0, Math.PI * 2);ctx.fill();if (frame.glowIntensity > 0.5) {ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';for (let i = 0; i < 5; i++) {const particleX = whale.width / 2 + 10 + (i * 3);const particleY = (Math.random() - 0.5) * 20;const particleSize = 2 + Math.random() * 3;ctx.beginPath();ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);ctx.fill();}}ctx.restore();}
+        const enemyWhaleSwimFrames = [{tailAngle: 15,finOffset: 2,bubbleCount: 1},{tailAngle: 5,finOffset: 1,bubbleCount: 0},{tailAngle: 0,finOffset: 0,bubbleCount: 0},{tailAngle: -5,finOffset: -1,bubbleCount: 2},{tailAngle: -15,finOffset: -2,bubbleCount: 1},{tailAngle: -5,finOffset: -1,bubbleCount: 0},{tailAngle: 0,finOffset: 0,bubbleCount: 0},{tailAngle: 5,finOffset: 1,bubbleCount: 1}];
+        function animateEnemyWhaleSwim(ctx, enemy, frameCount) {ctx.save();ctx.translate(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);ctx.scale(-1, 1);const frameIndex = Math.floor((frameCount + enemy.id * 3) / 8) % enemyWhaleSwimFrames.length;const frame = enemyWhaleSwimFrames[frameIndex];ctx.drawImage(enemyImageObjects[enemy.imageIndex], -enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);ctx.save();ctx.translate(-enemy.width / 2, 0);ctx.rotate(frame.tailAngle * Math.PI / 180);ctx.fillStyle = '#FF5252';if (enemy.imageIndex >= 3 && enemy.imageIndex <= 5) {ctx.fillStyle = '#FF8C00';} else if (enemy.imageIndex === 7) {ctx.fillStyle = '#00BFFF';}ctx.beginPath();ctx.moveTo(0, 0);ctx.lineTo(-10, -10);ctx.lineTo(-15, 0);ctx.lineTo(-10, 10);ctx.closePath();ctx.fill();ctx.restore();ctx.fillStyle = ctx.fillStyle;ctx.beginPath();ctx.moveTo(0, -enemy.height / 2);ctx.lineTo(5, -enemy.height / 2 - 8 + frame.finOffset);ctx.lineTo(10, -enemy.height / 2);ctx.closePath();ctx.fill();if (frame.bubbleCount > 0) {ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';for (let i = 0; i < frame.bubbleCount; i++) {const bubbleX = -enemy.width / 2 - 10 - (i * 5);const bubbleY = (Math.random() - 0.5) * 10;const bubbleSize = 2 + Math.random() * 3;ctx.beginPath();ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);ctx.fill();}}ctx.restore();}
+        const enemyWhaleAttackFrames = [{mouthOpen: 0,eyeSize: 1,glowIntensity: 0},{mouthOpen: 5,eyeSize: 1.2,glowIntensity: 0.2},{mouthOpen: 10,eyeSize: 1.5,glowIntensity: 0.5},{mouthOpen: 15,eyeSize: 1.8,glowIntensity: 0.8},{mouthOpen: 20,eyeSize: 2,glowIntensity: 1},{mouthOpen: 15,eyeSize: 1.8,glowIntensity: 0.8},{mouthOpen: 10,eyeSize: 1.5,glowIntensity: 0.5},{mouthOpen: 5,eyeSize: 1.2,glowIntensity: 0.2}];
+        function animateEnemyWhaleAttack(ctx, enemy, frameCount, isAttacking) {if (!isAttacking) {animateEnemyWhaleSwim(ctx, enemy, frameCount);return;}ctx.save();ctx.translate(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);ctx.scale(-1, 1);const frameIndex = Math.floor(frameCount / 4) % enemyWhaleAttackFrames.length;const frame = enemyWhaleAttackFrames[frameIndex];let enemyColor = '#FF5252';if (enemy.imageIndex >= 3 && enemy.imageIndex <= 5) {enemyColor = '#FF8C00';} else if (enemy.imageIndex === 7) {enemyColor = '#00BFFF';}if (frame.glowIntensity > 0) {ctx.save();ctx.globalAlpha = frame.glowIntensity * 0.7;ctx.shadowBlur = 15 * frame.glowIntensity;ctx.shadowColor = enemyColor;ctx.fillStyle = `rgba(${hexToRgb(enemyColor)}, 0.3)`;ctx.beginPath();ctx.arc(0, 0, enemy.width * 0.7, 0, Math.PI * 2);ctx.fill();ctx.restore();}ctx.drawImage(enemyImageObjects[enemy.imageIndex], -enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);ctx.fillStyle = '#FF4500';ctx.beginPath();ctx.arc(enemy.width / 2 - 5, 0, 5 + frame.mouthOpen, 0, Math.PI * 2);ctx.fill();ctx.fillStyle = '#FF0000';ctx.beginPath();ctx.arc(enemy.width / 4, -enemy.height / 4, 3 * frame.eyeSize, 0, Math.PI * 2);ctx.fill();ctx.beginPath();ctx.arc(enemy.width / 4, enemy.height / 4, 3 * frame.eyeSize, 0, Math.PI * 2);ctx.fill();if (frame.glowIntensity > 0.5) {ctx.fillStyle = `rgba(${hexToRgb(enemyColor)}, 0.7)`;for (let i = 0; i < 5; i++) {const particleX = enemy.width / 2 + 10 + (i * 3);const particleY = (Math.random() - 0.5) * 20;const particleSize = 2 + Math.random() * 3;ctx.beginPath();ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);ctx.fill();}}ctx.restore();}
+        let frameCount = 0; let mainWhaleAttacking = false; let enemyAttackingStates = {};
+        function updateAnimations() {frameCount++;if (mainWhaleAttacking && frameCount % 32 === 0) {mainWhaleAttacking = false;}for (const enemyId in enemyAttackingStates) {if (enemyAttackingStates[enemyId].attacking) {enemyAttackingStates[enemyId].timer--;if (enemyAttackingStates[enemyId].timer <= 0) {enemyAttackingStates[enemyId].attacking = false;}}}}
+        function triggerMainWhaleAttack() {mainWhaleAttacking = true;}
+        function triggerEnemyWhaleAttack(enemyId) {if (!enemyAttackingStates[enemyId]) {enemyAttackingStates[enemyId] = { attacking: false, timer: 0 };}enemyAttackingStates[enemyId].attacking = true;enemyAttackingStates[enemyId].timer = 32;}
+        function hexToRgb(hex) {hex = hex.replace('#', '');if (hex.length === 3) {hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];}const r = parseInt(hex.substring(0, 2), 16);const g = parseInt(hex.substring(2, 4), 16);const b = parseInt(hex.substring(4, 6), 16);return `${r}, ${g}, ${b}`;}
+
+        // Game variables
+        let gameActive = false;
+        let isPaused = false; // --- ENHANCEMENT: Pause State ---
+        let score = 0;
+        let coins = 0; // --- ENHANCEMENT: Coin System ---
+        let roundCoins = 0; // Coins collected in current round
+        let health = 100;
+        let maxHealth = 100; // --- ENHANCEMENT: Store Upgrade ---
+        let power = 0;
+        let combo = 0;
+        const INITIAL_GAME_SPEED = 2;
+        let gameSpeed = INITIAL_GAME_SPEED;
+        let gravity = 0.5;
+        let isVertical = false; // Default to horizontal for side-scroller
+
+        // --- ENHANCEMENT START: Game Timers for Pause ---
+        let pipeSpawnTimeoutId;
+        let enemySpawnTimeoutId;
+        let powerUpSpawnTimeoutId;
+        let nextPipeSpawnTime = 0;
+        let nextEnemySpawnTime = 0;
+        let nextPowerUpSpawnTime = 0;
+        const INITIAL_PIPE_INTERVAL = 2000;
+        const INITIAL_ENEMY_INTERVAL = 2500; // Increased initial interval
+        const INITIAL_POWERUP_INTERVAL = 10000;
+        let currentPipeInterval = INITIAL_PIPE_INTERVAL;
+        let currentEnemyInterval = INITIAL_ENEMY_INTERVAL;
+        // --- ENHANCEMENT END: Game Timers for Pause ---
+
+
+        // Game objects (DOM elements)
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const coinDisplay = document.getElementById('coin-count'); // --- ENHANCEMENT: Coin System ---
+        const healthBar = document.getElementById('health-bar');
+        const powerBar = document.getElementById('power-bar');
+        const comboDisplay = document.getElementById('combo-display');
+        const powerUpNotification = document.getElementById('power-up-notification');
+
+        const startOverlay = document.getElementById('start-overlay');
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+        const pauseOverlay = document.getElementById('pause-overlay'); // --- ENHANCEMENT: Pause ---
+        const storeOverlay = document.getElementById('store-overlay'); // --- ENHANCEMENT: Store ---
+        const leaderboardOverlay = document.getElementById('leaderboard-overlay'); // --- ENHANCEMENT: Leaderboard ---
+        const howToPlayOverlay = document.getElementById('how-to-play-overlay');
+
+
+        const finalScoreDisplay = document.getElementById('final-score');
+        const roundCoinsDisplay = document.getElementById('round-coins');
+        const startGameButton = document.getElementById('start-game-button');
+        const restartButton = document.getElementById('restart-button');
+        const orientationToggle = document.getElementById('orientation-toggle');
+        const newGameButton = document.getElementById('new-game-button'); // --- ENHANCEMENT: UI ---
+        const pauseResumeButton = document.getElementById('pause-resume-button'); // --- ENHANCEMENT: UI ---
+        const resumeGameButton = document.getElementById('resume-game-button');
+        const submitScoreButton = document.getElementById('submit-score-button');
+
+        // Store UI Elements
+        const healthUpgradeLevelDisplay = document.getElementById('health-upgrade-level');
+        const healthUpgradeCostDisplay = document.getElementById('health-upgrade-cost');
+        const upgradeHealthButton = document.getElementById('upgrade-health-button');
+        const damageUpgradeLevelDisplay = document.getElementById('damage-upgrade-level');
+        const damageUpgradeCostDisplay = document.getElementById('damage-upgrade-cost');
+        const upgradeDamageButton = document.getElementById('upgrade-damage-button');
+        const firerateUpgradeLevelDisplay = document.getElementById('firerate-upgrade-level');
+        const firerateUpgradeCostDisplay = document.getElementById('firerate-upgrade-cost');
+        const upgradeFirerateButton = document.getElementById('upgrade-firerate-button');
+        const closeStoreButton = document.getElementById('close-store-button');
+        const storeButton = document.getElementById('store-button');
+
+        // Leaderboard UI
+        const leaderboardButton = document.getElementById('leaderboard-button');
+        const highScoresList = document.getElementById('high-scores-list');
+        const closeLeaderboardButton = document.getElementById('close-leaderboard-button');
+
+        // How to Play UI
+        const howToPlayButtonIntro = document.getElementById('how-to-play-button-intro');
+        const closeHowToPlayButton = document.getElementById('close-how-to-play-button');
+
+
+        // --- ENHANCEMENT START: Sound Effects Placeholders ---
+        // IMPORTANT: Replace 'sounds/file.wav' with actual paths to your sound files
+        const soundShoot = new Audio('sounds/shoot.wav');
+        const soundHitEnemy = new Audio('sounds/hit_enemy.wav');
+        const soundHitPlayer = new Audio('sounds/hit_player.wav');
+        const soundPowerUp = new Audio('sounds/powerup.wav');
+        const soundGameOver = new Audio('sounds/gameover.wav');
+        const soundClick = new Audio('sounds/click.wav');
+        const soundSpecial = new Audio('sounds/special.wav');
+        const soundCoin = new Audio('sounds/coin.wav');
+
+        function playSound(sound) {
+            // sound.currentTime = 0; // Rewind to start if playing again quickly
+            // sound.play().catch(e => console.warn("Sound play failed:", e)); // Play and catch errors
+        }
+        // --- ENHANCEMENT END: Sound Effects Placeholders ---
+
+
+        // Character and enemy images
+        const playerImage = new Image();
+        playerImage.src = 'https://iili.io/3PHNlSf.png';
+
+        const enemyImageSources = [
+            'https://iili.io/3PHNGdN.png', 'https://iili.io/3PHNJmv.png', 'https://iili.io/3PHNVWb.png',
+            'https://iili.io/3PHNWlX.png', 'https://iili.io/3PHNMGa.png', 'https://iili.io/3PHNDpg.png',
+            'https://iili.io/3PHN1Vj.png', 'https://iili.io/3PHN3nQ.png', 'https://iili.io/3PHNFAx.png'
+        ];
+        const allImageSources = [playerImage.src, ...enemyImageSources];
+        const enemyImageObjects = []; // Will be populated by preloader
+
+        // --- ENHANCEMENT START: Image Preloader ---
+        let imagesLoaded = 0;
+        function preloadImages(sources, callback) {
+            sources.forEach((src, index) => {
+                const img = new Image();
+                img.onload = () => {
+                    imagesLoaded++;
+                    if (index === 0) { // Player image
+                        // playerImage is already set up, this confirms load
+                    } else if (index > 0 && index <= enemyImageSources.length) { // Enemy images
+                        enemyImageObjects[index - 1] = img;
+                    }
+                    if (imagesLoaded === sources.length) {
+                        preloader.style.display = 'none';
+                        callback();
+                    }
+                };
+                img.onerror = () => {
+                    console.error("Failed to load image:", src);
+                    imagesLoaded++; // Still count it to not hang preloader
+                     if (imagesLoaded === sources.length) {
+                        preloader.style.display = 'none';
+                        callback(); // Proceed even if some images fail
+                    }
+                };
+                img.src = src;
+            });
+        }
+        // --- ENHANCEMENT END: Image Preloader ---
+
+
+        // --- ENHANCEMENT START: Store Upgrade Variables and Logic ---
+        const MAX_UPGRADE_LEVEL = 5;
+        let upgrades = {
+            health: { level: 1, baseCost: 100, costMultiplier: 1.5, effectPerLevel: 20 }, // Extra health
+            damage: { level: 1, baseCost: 150, costMultiplier: 1.6, effectPerLevel: 2 },  // Damage increase
+            fireRate: { level: 1, baseCost: 200, costMultiplier: 1.7, effectPerLevel: -2 } // Lower is faster, so negative effect
+        };
+        const BASE_PLAYER_DAMAGE = 10;
+        const BASE_PLAYER_FIRE_RATE = 30; // Frames
+        const BASE_PLAYER_MAX_HEALTH = 100;
+
+        function calculatePlayerStats() {
+            maxHealth = BASE_PLAYER_MAX_HEALTH + (upgrades.health.level -1) * upgrades.health.effectPerLevel;
+            player.projectileDamage = BASE_PLAYER_DAMAGE + (upgrades.damage.level -1) * upgrades.damage.effectPerLevel;
+            player.fireRate = Math.max(10, BASE_PLAYER_FIRE_RATE + (upgrades.fireRate.level-1) * upgrades.fireRate.effectPerLevel); // Ensure fire rate doesn't go too low
+        }
+
+        function getUpgradeCost(upgradeKey) {
+            const upgrade = upgrades[upgradeKey];
+            if (upgrade.level > MAX_UPGRADE_LEVEL) return Infinity;
+            return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level - 1));
+        }
+
+        function updateStoreUI() {
+            healthUpgradeLevelDisplay.textContent = `Lv ${upgrades.health.level}`;
+            const healthCost = getUpgradeCost('health');
+            healthUpgradeCostDisplay.textContent = healthCost === Infinity ? "MAX" : `${healthCost} coins`;
+            upgradeHealthButton.disabled = coins < healthCost || healthCost === Infinity;
+
+            damageUpgradeLevelDisplay.textContent = `Lv ${upgrades.damage.level}`;
+            const damageCost = getUpgradeCost('damage');
+            damageUpgradeCostDisplay.textContent = damageCost === Infinity ? "MAX" : `${damageCost} coins`;
+            upgradeDamageButton.disabled = coins < damageCost || damageCost === Infinity;
+
+            firerateUpgradeLevelDisplay.textContent = `Lv ${upgrades.fireRate.level}`;
+            const firerateCost = getUpgradeCost('fireRate');
+            firerateUpgradeCostDisplay.textContent = firerateCost === Infinity ? "MAX" : `${firerateCost} coins`;
+            upgradeFirerateButton.disabled = coins < firerateCost || firerateCost === Infinity;
+
+            coinDisplay.textContent = coins;
+        }
+
+        function purchaseUpgrade(upgradeKey) {
+            playSound(soundClick);
+            const cost = getUpgradeCost(upgradeKey);
+            if (coins >= cost && upgrades[upgradeKey].level <= MAX_UPGRADE_LEVEL) {
+                coins -= cost;
+                upgrades[upgradeKey].level++;
+                calculatePlayerStats();
+                updateStoreUI();
+                saveGameData();
+                showPowerUpNotification(`${upgradeKey.charAt(0).toUpperCase() + upgradeKey.slice(1)} Upgraded!`);
+            }
+        }
+        // --- ENHANCEMENT END: Store Upgrade Variables and Logic ---
+
+        // --- ENHANCEMENT START: Save/Load Game Data (localStorage) ---
+        function saveGameData() {
+            localStorage.setItem('dogeWhaleGameCoins', coins.toString());
+            localStorage.setItem('dogeWhaleGameUpgrades', JSON.stringify(upgrades));
+        }
+
+        function loadGameData() {
+            const savedCoins = localStorage.getItem('dogeWhaleGameCoins');
+            if (savedCoins !== null) {
+                coins = parseInt(savedCoins, 10);
+            }
+            const savedUpgrades = localStorage.getItem('dogeWhaleGameUpgrades');
+            if (savedUpgrades !== null) {
+                upgrades = JSON.parse(savedUpgrades);
+            }
+            calculatePlayerStats(); // Apply loaded upgrades
+            updateStoreUI();
+            coinDisplay.textContent = coins;
+        }
+        // --- ENHANCEMENT END: Save/Load Game Data ---
+
+        // --- ENHANCEMENT START: Leaderboard Logic ---
+        const MAX_LEADERBOARD_ENTRIES = 5;
+        let highScores = [];
+
+        function loadHighScores() {
+            const savedScores = localStorage.getItem('dogeWhaleGameHighScores');
+            if (savedScores) {
+                highScores = JSON.parse(savedScores);
+            } else {
+                highScores = [];
+            }
+        }
+        function saveHighScores() {
+            localStorage.setItem('dogeWhaleGameHighScores', JSON.stringify(highScores));
+        }
+        function addHighScore(name, scoreValue) {
+            highScores.push({ name, score: scoreValue });
+            highScores.sort((a, b) => b.score - a.score); // Sort descending
+            highScores = highScores.slice(0, MAX_LEADERBOARD_ENTRIES); // Keep top N
+            saveHighScores();
+        }
+        function displayHighScores() {
+            playSound(soundClick);
+            loadHighScores();
+            highScoresList.innerHTML = ''; // Clear previous list
+            if (highScores.length === 0) {
+                highScoresList.innerHTML = '<li>No scores yet! Play a game!</li>';
+            } else {
+                highScores.forEach(entry => {
+                    const li = document.createElement('li');
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = entry.name;
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.textContent = entry.score;
+                    li.appendChild(nameSpan);
+                    li.appendChild(scoreSpan);
+                    highScoresList.appendChild(li);
+                });
+            }
+            leaderboardOverlay.classList.add('active');
+        }
+        function checkIfHighScore(scoreValue) {
+            loadHighScores();
+            if (highScores.length < MAX_LEADERBOARD_ENTRIES || scoreValue > highScores[highScores.length - 1].score) {
+                return true;
+            }
+            return false;
+        }
+        // --- ENHANCEMENT END: Leaderboard Logic ---
+
+
+        // Game objects
+        let player = {
+            x: canvas.width / 2 - 30,
+            y: canvas.height / 2,
+            width: 60,
+            height: 40,
+            velocity: 0,
+            isJumping: false,
+            autoFire: true,
+            fireTimer: 0,
+            fireRate: 30, // Base, will be modified by upgrades
+            projectileDamage: 10, // Base, will be modified by upgrades
+            // --- ENHANCEMENT START: Player Hit Flash ---
+            isHit: false,
+            hitTimer: 0,
+            hitDuration: 30, // Frames for flash
+            // --- ENHANCEMENT END: Player Hit Flash ---
+        };
+
+        let pipes = [];
+        let enemies = [];
+        let projectiles = [];
+        let enemyProjectiles = [];
+        let particles = [];
+        let powerUps = [];
+
+        // Initialize game
+        function initGame(isRestart = false) {
+            if (!isRestart) playSound(soundClick);
+
+            gameActive = true;
+            isPaused = false;
+            pauseResumeButton.textContent = 'Pause';
+            score = 0;
+            roundCoins = 0; // Reset round coins
+            // health = 100; // Health is now based on maxHealth from upgrades
+            calculatePlayerStats(); // Recalculate stats based on upgrades
+            health = maxHealth;
+
+            power = 0;
+            combo = 0;
+            gameSpeed = INITIAL_GAME_SPEED;
+            currentPipeInterval = INITIAL_PIPE_INTERVAL;
+            currentEnemyInterval = INITIAL_ENEMY_INTERVAL;
+
+
+            player = {
+                ...player, // Keep upgrade-related properties like fireRate, projectileDamage
+                x: canvas.width / 2 - 30,
+                y: canvas.height / 2,
+                velocity: 0,
+                isJumping: false,
+                // autoFire: true, // Already set
+                fireTimer: 0,
+                isHit: false,
+                hitTimer: 0,
+            };
+
+            pipes = [];
+            enemies = [];
+            projectiles = [];
+            enemyProjectiles = [];
+            particles = [];
+            powerUps = [];
+
+            scoreDisplay.textContent = score;
+            updateHealthBar();
+            powerBar.style.width = '0%';
+            comboDisplay.style.opacity = '0';
+
+            startOverlay.classList.remove('active');
+            gameOverOverlay.classList.remove('active');
+            pauseOverlay.classList.remove('active');
+            storeOverlay.classList.remove('active');
+            leaderboardOverlay.classList.remove('active');
+            howToPlayOverlay.classList.remove('active');
+
+
+            // --- ENHANCEMENT: Clear existing spawner timeouts before starting new ones ---
+            clearTimeout(pipeSpawnTimeoutId);
+            clearTimeout(enemySpawnTimeoutId);
+            clearTimeout(powerUpSpawnTimeoutId);
+
+            // --- ENHANCEMENT: Use game loop driven timers for spawning ---
+            nextPipeSpawnTime = frameCount + currentPipeInterval / (1000/60); // Approx frames
+            nextEnemySpawnTime = frameCount + currentEnemyInterval / (1000/60);
+            nextPowerUpSpawnTime = frameCount + INITIAL_POWERUP_INTERVAL / (1000/60);
+
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); // Cancel previous loop if any
+            gameLoop();
+        }
+
+        let animationFrameId; // To control the game loop
+        function gameLoop() {
+            if (!gameActive) { // If game over, don't loop
+                return;
+            }
+            if (isPaused) { // If paused, request next frame but don't update/draw
+                animationFrameId = requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateAnimations(); // Updates frameCount
+
+            // --- ENHANCEMENT START: Difficulty Progression ---
+            gameSpeed = INITIAL_GAME_SPEED + Math.floor(score / 300) * 0.2; // Increase speed every 300 score
+            currentPipeInterval = Math.max(1000, INITIAL_PIPE_INTERVAL - Math.floor(score / 500) * 100); // Faster pipes
+            currentEnemyInterval = Math.max(800, INITIAL_ENEMY_INTERVAL - Math.floor(score / 400) * 100); // Faster enemies
+            // --- ENHANCEMENT END: Difficulty Progression ---
+
+
+            // --- ENHANCEMENT START: Game loop driven spawning ---
+            if (frameCount >= nextPipeSpawnTime) {
+                spawnPipe();
+                nextPipeSpawnTime = frameCount + currentPipeInterval / (1000/60);
+            }
+            if (frameCount >= nextEnemySpawnTime) {
+                spawnEnemy();
+                nextEnemySpawnTime = frameCount + currentEnemyInterval / (1000/60);
+            }
+            if (frameCount >= nextPowerUpSpawnTime) {
+                spawnPowerUp();
+                nextPowerUpSpawnTime = frameCount + INITIAL_POWERUP_INTERVAL / (1000/60);
+            }
+            // --- ENHANCEMENT END: Game loop driven spawning ---
+
+
+            updatePlayer();
+            updatePipes();
+            updateEnemies();
+            updateProjectiles();
+            updateEnemyProjectiles();
+            updateParticles();
+            updatePowerUps();
+
+            drawBackground();
+            drawPipes();
+            drawEnemies(); // Must be drawn before player if player can go behind
+            drawPlayer();
+            drawProjectiles();
+            drawEnemyProjectiles();
+            drawParticles();
+            drawPowerUps();
+
+            checkCollisions();
+
+            score += 0.05 * gameSpeed; // Score increases with time and speed
+            scoreDisplay.textContent = Math.floor(score);
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+
+        function updatePlayer() {
+            player.velocity += gravity;
+            player.y += player.velocity;
+
+            if (player.y < 0) {
+                player.y = 0;
+                player.velocity = 0;
+            }
+            if (player.y + player.height > canvas.height) {
+                player.y = canvas.height - player.height;
+                player.velocity = 0;
+                player.isJumping = false;
+            }
+            player.x = canvas.width / 2 - 30;
+
+            if (player.autoFire && gameActive && !isPaused) {
+                player.fireTimer++;
+                if (player.fireTimer >= player.fireRate) {
+                    fireProjectile();
+                    player.fireTimer = 0;
+                }
+            }
+
+            // --- ENHANCEMENT START: Player Hit Flash ---
+            if (player.isHit) {
+                player.hitTimer--;
+                if (player.hitTimer <= 0) {
+                    player.isHit = false;
+                }
+            }
+            // --- ENHANCEMENT END: Player Hit Flash ---
+        }
+
+        function drawPlayer() {
+            // --- ENHANCEMENT START: Player Hit Flash ---
+            if (player.isHit && Math.floor(player.hitTimer / 5) % 2 === 0) { // Flash every 5 frames
+                // Skip drawing for flash effect, or draw with different style
+                // For simplicity, we'll just skip draw some frames
+                // Or, slightly more complex, draw with transparency:
+                ctx.save();
+                ctx.globalAlpha = 0.5;
+                 if (mainWhaleAttacking) {
+                    animateMainWhaleAttack(ctx, player, frameCount, true);
+                } else {
+                    animateMainWhaleSwim(ctx, player, frameCount);
+                }
+                ctx.restore();
+                return; // Don't draw normally if flashing
+            }
+            // --- ENHANCEMENT END: Player Hit Flash ---
+
+            if (mainWhaleAttacking) {
+                animateMainWhaleAttack(ctx, player, frameCount, true);
+            } else {
+                animateMainWhaleSwim(ctx, player, frameCount);
+            }
+        }
+
+
+        function updatePipes() {
+            for (let i = pipes.length - 1; i >= 0; i--) { // Iterate backwards for safe splice
+                pipes[i].x -= gameSpeed;
+                if (pipes[i].x + pipes[i].width < 0) {
+                    pipes.splice(i, 1);
+                }
+            }
+        }
+        function drawPipes() {ctx.fillStyle = '#1E90FF';for (let i = 0; i < pipes.length; i++) {ctx.fillRect(pipes[i].x, 0, pipes[i].width, pipes[i].topHeight);ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottomHeight, pipes[i].width, pipes[i].bottomHeight);}}
+
+        function spawnPipe() { // No longer needs gameActive check, managed by gameLoop timer
+            const gap = 150 + Math.random() * 20; // Slightly variable gap
+            const minHeight = 50;
+            const maxHeight = canvas.height - gap - minHeight;
+            const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+            const bottomHeight = canvas.height - topHeight - gap;
+            pipes.push({ x: canvas.width, width: 80, topHeight, bottomHeight });
+        }
+
+
+        function updateEnemies() {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                // Movement patterns (simplified for brevity, assuming original logic is fine)
+                switch (enemy.movementPattern) {
+                    case 'sine': enemy.x -= gameSpeed * 1.2; enemy.y += Math.sin(enemy.x * 0.01) * 2; break;
+                    case 'zigzag': enemy.x -= gameSpeed * 1.1; enemy.zigzagTime += 0.05; enemy.y += Math.sin(enemy.zigzagTime) * 3; break;
+                    case 'chase': enemy.x -= gameSpeed * 0.8; if (enemy.y < player.y) enemy.y += 1; else enemy.y -= 1; break;
+                    case 'circular': enemy.x -= gameSpeed; enemy.circleTime += 0.03; enemy.y = enemy.baseY + Math.sin(enemy.circleTime) * 50; break;
+                    default: enemy.x -= gameSpeed;
+                }
+
+                // Boundary checks for enemies (simple y-axis)
+                if (enemy.y < 0) enemy.y = 0;
+                if (enemy.y + enemy.height > canvas.height) enemy.y = canvas.height - enemy.height;
+
+
+                enemy.fireTimer--;
+                if (enemy.fireTimer <= 0) {
+                    enemy.fireTimer = enemy.fireRate;
+                    // Attack patterns (simplified for brevity)
+                    switch (enemy.attackPattern) {
+                        case 'double': fireEnemyProjectile(enemy, 0, -1); fireEnemyProjectile(enemy, 0, 1); break;
+                        case 'triple': fireEnemyProjectile(enemy); fireEnemyProjectile(enemy, 0, -2); fireEnemyProjectile(enemy, 0, 2); break;
+                        case 'spread': for (let j = -2; j <= 2; j++) fireEnemyProjectile(enemy, 0, j); break;
+                        case 'aimed': const dx = player.x - enemy.x; const dy = player.y - enemy.y; const angle = Math.atan2(dy, dx); const speedX = Math.cos(angle) * 2; const speedY = Math.sin(angle) * 2; fireEnemyProjectile(enemy, speedX, speedY); break;
+                        default: fireEnemyProjectile(enemy);
+                    }
+                }
+                if (enemy.x + enemy.width < 0) {
+                    enemies.splice(i, 1);
+                }
+            }
+        }
+        function drawEnemies() {
+            for (let i = 0; i < enemies.length; i++) {
+                const enemy = enemies[i];
+                if (enemy.id === undefined) enemy.id = frameCount + i + Math.random(); // More unique ID
+                const isAttacking = enemyAttackingStates[enemy.id] && enemyAttackingStates[enemy.id].attacking;
+
+                // --- ENHANCEMENT START: Draw Enemy Health Bar ---
+                if (enemy.currentHealth < enemy.maxHealth) {
+                    const barWidth = enemy.width * (enemy.currentHealth / enemy.maxHealth);
+                    const barX = enemy.x;
+                    const barY = enemy.y - 10; // Above enemy
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(barX, barY, enemy.width, 5);
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(barX, barY, barWidth, 5);
+                }
+                // --- ENHANCEMENT END: Draw Enemy Health Bar ---
+
+                if (isAttacking) animateEnemyWhaleAttack(ctx, enemy, frameCount, true);
+                else animateEnemyWhaleSwim(ctx, enemy, frameCount);
+            }
+        }
+
+        function spawnEnemy() {
+            const imageIndex = Math.floor(Math.random() * enemyImageObjects.length);
+            const movementPatterns = ['sine', 'zigzag', 'chase', 'circular'];
+            const movementPattern = movementPatterns[Math.floor(Math.random() * movementPatterns.length)];
+            const attackPatterns = ['single', 'double', 'triple', 'spread', 'aimed'];
+            const attackPattern = attackPatterns[Math.floor(Math.random() * attackPatterns.length)];
+            const projectileTypes = ['normal', 'fire', 'ice', 'electric', 'rocket'];
+            const projectileType = projectileTypes[Math.floor(Math.random() * projectileTypes.length)];
+
+            const enemyBaseHealth = 10 + Math.floor(score / 500); // Enemies get tougher with score
+
+            const enemy = {
+                x: canvas.width, y: Math.random() * (canvas.height - 40),
+                baseY: Math.random() * (canvas.height - 40), width: 60, height: 40,
+                maxHealth: enemyBaseHealth, // --- ENHANCEMENT: Enemy Health ---
+                currentHealth: enemyBaseHealth, // --- ENHANCEMENT: Enemy Health ---
+                coinValue: 5 + Math.floor(Math.random() * 6), // --- ENHANCEMENT: Coin System ---
+                imageIndex, movementPattern, attackPattern, projectileType,
+                fireTimer: Math.floor(Math.random() * 60) + 30,
+                fireRate: Math.max(30, Math.floor(Math.random() * 40) + 60 - Math.floor(score/1000)*5), // Faster firing with score
+                zigzagTime: 0, circleTime: 0,
+                projectileSpeed: 3 + Math.random() * 2,
+                projectileDamage: 5 + Math.floor(Math.random() * 5) + Math.floor(score/1000), // Stronger enemy projectiles
+                projectileSize: 4 + Math.floor(Math.random() * 3),
+                projectileColor: ['#FF5252', '#FF4500', '#00BFFF', '#FFFF00', '#FF8C00'][Math.floor(Math.random() * 5)]
+            };
+            enemies.push(enemy);
+        }
+
+
+        function updateProjectiles() {
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                projectiles[i].x += projectiles[i].speed;
+                if (projectiles[i].x > canvas.width) {
+                    projectiles.splice(i, 1);
+                }
+            }
+        }
+        function drawProjectiles() {ctx.fillStyle = '#FFD700';for (let i = 0; i < projectiles.length; i++) {ctx.beginPath();ctx.arc(projectiles[i].x, projectiles[i].y, projectiles[i].radius, 0, Math.PI * 2);ctx.fill();}}
+
+        function fireProjectile() {
+            if (!gameActive || isPaused) return;
+            projectiles.push({
+                x: player.x + player.width,
+                y: player.y + player.height / 2,
+                radius: 5,
+                speed: 10,
+                damage: player.projectileDamage // --- ENHANCEMENT: Use player's damage stat ---
+            });
+            playSound(soundShoot);
+            triggerMainWhaleAttack();
+        }
+
+
+        function updateEnemyProjectiles() {
+             for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+                const projectile = enemyProjectiles[i];
+                projectile.x -= projectile.baseSpeed;
+                if (projectile.speedX) projectile.x -= projectile.speedX;
+                if (projectile.speedY) projectile.y += projectile.speedY;
+                if (projectile.accelerate) projectile.baseSpeed *= 1.02;
+                if (projectile.pulsate) { projectile.pulsePhase = (projectile.pulsePhase || 0) + 0.1; projectile.radius = 5 + Math.sin(projectile.pulsePhase) * 2;}
+                if (projectile.particles && Math.random() < 0.3) createParticle(projectile.x, projectile.y, projectile.color, 0.7);
+                if (projectile.trail && Math.random() < 0.2) createTrail(projectile.x, projectile.y, projectile.color);
+                if (projectile.smoke && Math.random() < 0.2) createSmoke(projectile.x, projectile.y);
+                if (projectile.x < 0 || projectile.y < 0 || projectile.y > canvas.height) {
+                    enemyProjectiles.splice(i, 1);
+                }
+            }
+        }
+        function drawEnemyProjectiles() {
+            for (let i = 0; i < enemyProjectiles.length; i++) {
+                const projectile = enemyProjectiles[i];
+                ctx.fillStyle = projectile.color || '#FF5252';
+                ctx.beginPath(); ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2); ctx.fill();
+                if (projectile.type !== 'normal') {ctx.save(); ctx.globalAlpha = 0.5; ctx.shadowBlur = 10; ctx.shadowColor = projectile.color; ctx.beginPath(); ctx.arc(projectile.x, projectile.y, projectile.radius * 1.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();}
+            }
+        }
+        function createParticle(x, y, color, alpha) {particles.push({x: x,y: y,radius: Math.random() * 3 + 1,velocityX: (Math.random() - 0.5) * 2,velocityY: (Math.random() - 0.5) * 2,alpha: alpha || 1,color: color || '#FFD700'});}
+        function createTrail(x, y, color) {for (let i = 0; i < 3; i++) {particles.push({x: x,y: y,radius: 2,velocityX: 0,velocityY: 0,alpha: 0.7,color: color,fadeSpeed: 0.02});}}
+        function createSmoke(x, y) {for (let i = 0; i < 2; i++) {particles.push({x: x + (Math.random() - 0.5) * 5,y: y + (Math.random() - 0.5) * 5,radius: Math.random() * 5 + 3,velocityX: 1,velocityY: (Math.random() - 0.5) * 0.5,alpha: 0.5,color: '#888888',fadeSpeed: 0.01,growSpeed: 0.1});}}
+
+        function fireEnemyProjectile(enemy, speedX, speedY) {
+            const projectile = {x: enemy.x,y: enemy.y + enemy.height / 2,radius: enemy.projectileSize || 5,speedX: speedX || 0,speedY: speedY || 0,baseSpeed: enemy.projectileSpeed || 5,damage: enemy.projectileDamage || 5,color: enemy.projectileColor || '#FF5252',type: enemy.projectileType || 'normal'};
+            switch (projectile.type) {case 'fire': projectile.color = '#FF4500'; projectile.particles = true; break; case 'ice': projectile.color = '#00BFFF'; projectile.trail = true; break; case 'electric': projectile.color = '#FFFF00'; projectile.pulsate = true; break; case 'rocket': projectile.color = '#FF8C00'; projectile.accelerate = true; projectile.smoke = true; break;}
+            enemyProjectiles.push(projectile);
+            createExplosion(enemy.x, enemy.y + enemy.height / 2, projectile.color);
+            if (enemy.id !== undefined) triggerEnemyWhaleAttack(enemy.id);
+        }
+
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.x += p.velocityX; p.y += p.velocityY;
+                if (p.fadeSpeed) p.alpha -= p.fadeSpeed; else p.alpha -= 0.01;
+                if (p.growSpeed) p.radius += p.growSpeed;
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+        }
+        function drawParticles() {for (let i = 0; i < particles.length; i++) {const p = particles[i];ctx.save();ctx.globalAlpha = p.alpha;ctx.fillStyle = p.color;ctx.beginPath();ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);ctx.fill();ctx.restore();}}
+        function createExplosion(x, y, color) {for (let i = 0; i < 10; i++) createParticle(x, y, color);}
+
+
+        function updatePowerUps() {
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                powerUps[i].x -= gameSpeed;
+                if (powerUps[i].x + powerUps[i].width < 0) {
+                    powerUps.splice(i, 1);
+                }
+            }
+        }
+        function drawPowerUps() {for (let i = 0; i < powerUps.length; i++) {ctx.fillStyle = powerUps[i].type === 'health' ? '#FF4500' : '#4169E1';ctx.fillRect(powerUps[i].x, powerUps[i].y, powerUps[i].width, powerUps[i].height);ctx.fillStyle = 'white';ctx.font = '20px Arial';ctx.textAlign = 'center';ctx.textBaseline = 'middle';ctx.fillText(powerUps[i].type === 'health' ? '+' : 'P', powerUps[i].x + powerUps[i].width / 2, powerUps[i].y + powerUps[i].height / 2);}}
+
+        function spawnPowerUp() {
+            powerUps.push({x: canvas.width,y: Math.random() * (canvas.height - 30),width: 30,height: 30,type: Math.random() < 0.5 ? 'health' : 'power'});
+        }
+
+
+        function checkCollisions() {
+            // Player collision with pipes
+            for (let pipe of pipes) {
+                if (player.x < pipe.x + pipe.width && player.x + player.width > pipe.x &&
+                    (player.y < pipe.topHeight || player.y + player.height > canvas.height - pipe.bottomHeight)) {
+                    takeDamage(10); createExplosion(player.x + player.width / 2, player.y + player.height / 2, '#FF5252');
+                    // To prevent multiple hits from same pipe in one frame:
+                    // Could add a short invulnerability or mark pipe as 'hit' for a frame
+                    return; // Exit early if hit a pipe to avoid other collisions in same frame
+                }
+            }
+
+            // Player collision with enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                if (player.x < enemy.x + enemy.width && player.x + player.width > enemy.x &&
+                    player.y < enemy.y + enemy.height && player.y + player.height > enemy.y) {
+                    takeDamage(20); createExplosion(player.x + player.width / 2, player.y + player.height / 2, '#FF5252');
+                    // Damage enemy too on collision? Or just player takes damage.
+                    // For now, enemy also gets destroyed to simplify
+                    createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, enemy.projectileColor);
+                    enemies.splice(i, 1);
+                    return; // Exit early
+                }
+            }
+
+            // Player collision with enemy projectiles
+            for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+                const proj = enemyProjectiles[i];
+                if (player.x < proj.x + proj.radius && player.x + player.width > proj.x - proj.radius &&
+                    player.y < proj.y + proj.radius && player.y + player.height > proj.y - proj.radius) {
+                    takeDamage(proj.damage); createExplosion(proj.x, proj.y, proj.color);
+                    enemyProjectiles.splice(i, 1);
+                    return; // Exit early
+                }
+            }
+
+            // Projectile collision with enemies
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const proj = projectiles[i];
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    if (proj.x - proj.radius < enemy.x + enemy.width && proj.x + proj.radius > enemy.x &&
+                        proj.y - proj.radius < enemy.y + enemy.height && proj.y + proj.radius > enemy.y) {
+
+                        // --- ENHANCEMENT START: Enemy Health ---
+                        enemy.currentHealth -= proj.damage;
+                        createExplosion(proj.x, proj.y, '#FFD700'); // Projectile hit effect
+                        projectiles.splice(i, 1); // Remove projectile
+
+                        if (enemy.currentHealth <= 0) {
+                            createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.projectileColor || '#FF5252'); // Enemy death
+                            enemies.splice(j, 1);
+                            score += 10 * (combo > 0 ? combo : 1); // Score bonus for combo
+                            combo++;
+                            updateCombo();
+                            power = Math.min(100, power + 5);
+                            updatePowerBar();
+                            // --- ENHANCEMENT: Coin System ---
+                            coins += enemy.coinValue;
+                            roundCoins += enemy.coinValue;
+                            coinDisplay.textContent = coins;
+                            playSound(soundCoin);
+                            saveGameData(); // Save coins
+                            playSound(soundHitEnemy);
+                        } else {
+                             // Enemy hit but not destroyed, maybe a smaller sound/visual
+                            playSound(soundHitEnemy); // Or a different "thud" sound
+                        }
+                        // --- ENHANCEMENT END: Enemy Health ---
+                        break; // Projectile can only hit one enemy
+                    }
+                }
+                if (i >= projectiles.length) break; // If projectile was removed
+            }
+
+            // Player collision with power-ups
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const pu = powerUps[i];
+                if (player.x < pu.x + pu.width && player.x + player.width > pu.x &&
+                    player.y < pu.y + pu.height && player.y + player.height > pu.y) {
+                    playSound(soundPowerUp);
+                    if (pu.type === 'health') {
+                        health = Math.min(maxHealth, health + 20); // Use maxHealth
+                        updateHealthBar();
+                        showPowerUpNotification('Health +20');
+                    } else {
+                        power = Math.min(100, power + 30);
+                        updatePowerBar();
+                        showPowerUpNotification('Power +30');
+                    }
+                    powerUps.splice(i, 1);
+                }
+            }
+        }
+
+        // --- ENHANCEMENT: Update Health Bar function ---
+        function updateHealthBar() {
+            healthBar.style.width = `${Math.max(0, (health / maxHealth) * 100)}%`;
+        }
+
+
+        function takeDamage(amount) {
+            if (player.isHit) return; // Invulnerable for a short period after being hit
+
+            health -= amount;
+            // healthBar.style.width = `${health}%`; // Old way
+            updateHealthBar(); // New way, considers maxHealth
+            playSound(soundHitPlayer);
+
+            combo = 0;
+            updateCombo(); // Will hide combo display if combo is 0 or 1
+
+            // --- ENHANCEMENT START: Player Hit Flash ---
+            player.isHit = true;
+            player.hitTimer = player.hitDuration;
+            // --- ENHANCEMENT END: Player Hit Flash ---
+
+
+            if (health <= 0) {
+                health = 0; // Prevent negative health display
+                updateHealthBar();
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            gameActive = false;
+            playSound(soundGameOver);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); // Stop game loop
+            clearTimeout(pipeSpawnTimeoutId); // Clear any pending spawners
+            clearTimeout(enemySpawnTimeoutId);
+            clearTimeout(powerUpSpawnTimeoutId);
+
+            finalScoreDisplay.textContent = Math.floor(score);
+            roundCoinsDisplay.textContent = roundCoins;
+            gameOverOverlay.classList.add('active');
+
+            saveGameData(); // Save total coins
+
+            if (checkIfHighScore(Math.floor(score))) {
+                submitScoreButton.style.display = 'inline-block';
+            } else {
+                submitScoreButton.style.display = 'none';
+            }
+        }
+
+
+        function updateCombo() {
+            if (combo > 1) {
+                comboDisplay.textContent = `Combo x${combo}`;
+                comboDisplay.style.opacity = '1';
+                setTimeout(() => { // Hide after some time if no new combo
+                    if (comboDisplay.style.opacity === '1' && combo > 1) { // Check if still relevant
+                       // comboDisplay.style.opacity = '0'; // Let it fade naturally if combo ends
+                    }
+                }, 2000);
+            } else {
+                 comboDisplay.style.opacity = '0';
+            }
+        }
+        function updatePowerBar() {powerBar.style.width = `${power}%`;}
+        function showPowerUpNotification(text) {powerUpNotification.textContent = text;powerUpNotification.style.opacity = '1';powerUpNotification.style.transform = 'translateX(-50%) translateY(-20px)';setTimeout(() => {powerUpNotification.style.opacity = '0';powerUpNotification.style.transform = 'translateX(-50%) translateY(0)';}, 2000);}
+
+
+        function useSpecialAttack() {
+            if (power >= 50 && gameActive && !isPaused) {
+                playSound(soundSpecial);
+                power -= 50;
+                updatePowerBar();
+                for (let enemy of enemies) {
+                    createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#4169E1');
+                }
+                enemies = []; // Clear all enemies
+                enemyProjectiles = []; // Clear enemy projectiles
+                for (let i = 0; i < 50; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 100 + 50;
+                    const x = player.x + Math.cos(angle) * distance;
+                    const y = player.y + Math.sin(angle) * distance;
+                    createParticle(x, y, '#4169E1');
+                }
+                score += 50;
+                scoreDisplay.textContent = Math.floor(score);
+            }
+        }
+
+
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#4169E1'); gradient.addColorStop(1, '#000080');
+            ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            for (let i = 0; i < 5; i++) {
+                const x = (i * canvas.width / 5 + frameCount * 0.2) % canvas.width; const y = 30;
+                const size = 30 + Math.sin(frameCount * 0.01 + i) * 5;
+                ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + 20, y - 10, size * 0.7, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x - 20, y - 5, size * 0.6, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.fillStyle = 'rgba(0, 191, 255, 0.5)';
+            const waveHeight = 20; const waveFrequency = 0.05; const waveSpeed = 0.1;
+            ctx.beginPath(); ctx.moveTo(0, canvas.height);
+            for (let x = 0; x <= canvas.width; x += 10) {
+                const yPos = canvas.height - waveHeight - Math.sin((x * waveFrequency) + (frameCount * waveSpeed)) * waveHeight;
+                ctx.lineTo(x, yPos);
+            }
+            ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+        }
+
+        function resizeCanvas() {
+            canvas.width = gameContainer.clientWidth;
+            canvas.height = gameContainer.clientHeight;
+            if (player) player.x = canvas.width / 2 - 30;
+            // Redraw if game is active and not paused, or if on start/game over screen
+            if (gameActive && !isPaused) {
+                // The game loop will handle redrawing
+            } else if (!gameActive && (startOverlay.classList.contains('active') || gameOverOverlay.classList.contains('active'))) {
+                // Could redraw a static background if needed, but overlays cover it.
+            }
+        }
+
+        function toggleOrientation() {
+            playSound(soundClick);
+            isVertical = !isVertical;
+            document.body.classList.toggle('vertical', isVertical);
+            // Ensure mobile controls are correctly positioned after orientation toggle
+            // This might need more specific CSS adjustments for the .vertical state
+            if (isVertical) {
+                // Example: document.getElementById('mobile-controls').style.bottom = '80px';
+            } else {
+                // document.getElementById('mobile-controls').style.bottom = '20px';
+            }
+            setTimeout(resizeCanvas, 50); // Give a moment for layout shift
+        }
+
+        // --- ENHANCEMENT START: Pause Game Logic ---
+        function pauseGame() {
+            if (!gameActive) return; // Can't pause if game not running
+            isPaused = true;
+            pauseResumeButton.textContent = 'Resume';
+            pauseOverlay.classList.add('active');
+            // Game loop handles not updating/drawing
+            // Spawner timeouts are handled by game loop driven logic now
+            playSound(soundClick);
+        }
+
+        function resumeGame() {
+            if (!gameActive) return;
+            isPaused = false;
+            pauseResumeButton.textContent = 'Pause';
+            pauseOverlay.classList.remove('active');
+            // Restart game loop if it was fully stopped (though current logic just skips updates)
+            // gameLoop(); // Already running via requestAnimationFrame, just unblocks it
+            playSound(soundClick);
+        }
+        // --- ENHANCEMENT END: Pause Game Logic ---
+
+
+        // Event listeners
+        window.addEventListener('load', () => {
+            loadGameData(); // Load coins and upgrades
+            loadHighScores(); // Load high scores for potential check
+
+            preloadImages(allImageSources, () => {
+                // All images loaded, safe to start game interactions
+                resizeCanvas();
+
+                // Button Handlers
+                startGameButton.addEventListener('click', () => initGame());
+                restartButton.addEventListener('click', () => initGame(true)); // isRestart = true
+                newGameButton.addEventListener('click', () => {
+                    if (gameActive && !isPaused) {
+                        if (confirm("Start a new game? Current progress will be lost.")) {
+                            initGame();
+                        }
+                    } else {
+                        initGame();
+                    }
+                });
+
+                pauseResumeButton.addEventListener('click', () => {
+                    if (isPaused) resumeGame();
+                    else pauseGame();
+                });
+                resumeGameButton.addEventListener('click', resumeGame); // For overlay button
+
+                orientationToggle.addEventListener('click', toggleOrientation);
+                window.addEventListener('resize', resizeCanvas);
+
+                // Store Buttons
+                storeButton.addEventListener('click', () => {
+                    playSound(soundClick);
+                    if (gameActive && !isPaused) pauseGame(); // Pause game if active
+                    updateStoreUI();
+                    storeOverlay.classList.add('active');
+                });
+                closeStoreButton.addEventListener('click', () => {
+                    playSound(soundClick);
+                    storeOverlay.classList.remove('active');
+                    // Optionally resume game if it was paused FOR the store
+                    // if (gameActive && isPaused && !pauseOverlay.classList.contains('active')) resumeGame();
+                });
+                upgradeHealthButton.addEventListener('click', () => purchaseUpgrade('health'));
+                upgradeDamageButton.addEventListener('click', () => purchaseUpgrade('damage'));
+                upgradeFirerateButton.addEventListener('click', () => purchaseUpgrade('fireRate'));
+
+                // Leaderboard Buttons
+                leaderboardButton.addEventListener('click', () => {
+                     if (gameActive && !isPaused) pauseGame(); // Pause game if active
+                    displayHighScores();
+                });
+                closeLeaderboardButton.addEventListener('click', () => {
+                    playSound(soundClick);
+                    leaderboardOverlay.classList.remove('active');
+                });
+                submitScoreButton.addEventListener('click', () => {
+                    playSound(soundClick);
+                    const playerName = prompt("Enter your name for the leaderboard (max 10 chars):", "Guest");
+                    if (playerName) {
+                        addHighScore(playerName.substring(0, 10), Math.floor(score));
+                        submitScoreButton.style.display = 'none'; // Hide after submission
+                        displayHighScores(); // Show updated leaderboard
+                        gameOverOverlay.classList.remove('active'); // Close game over screen
+                    }
+                });
+
+                // How to Play Buttons
+                howToPlayButtonIntro.addEventListener('click', () => {
+                    playSound(soundClick);
+                    howToPlayOverlay.classList.add('active');
+                });
+                closeHowToPlayButton.addEventListener('click', () => {
+                    playSound(soundClick);
+                    howToPlayOverlay.classList.remove('active');
+                });
+
+
+                // Keyboard controls
+                window.addEventListener('keydown', (e) => {
+                    if (storeOverlay.classList.contains('active') || leaderboardOverlay.classList.contains('active') || howToPlayOverlay.classList.contains('active')) return; // No game input if overlays active
+
+                    if (e.key.toLowerCase() === 'p') { // Pause/Resume with 'P'
+                        if (isPaused) resumeGame();
+                        else pauseGame();
+                        return;
+                    }
+
+                    if (!gameActive || isPaused) return;
+
+                    switch (e.key) {
+                        case ' ': case 'ArrowUp': player.velocity = -8; player.isJumping = true; break;
+                        case 'ArrowDown': player.velocity = 8; break;
+                        case 'f': case 'F': fireProjectile(); break;
+                        case 's': case 'S': useSpecialAttack(); break;
+                    }
+                });
+
+                // Mobile controls
+                document.getElementById('mobile-up').addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameActive || isPaused) return; player.velocity = -8; player.isJumping = true; });
+                document.getElementById('mobile-down').addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameActive || isPaused) return; player.velocity = 8; });
+                document.getElementById('combat-fire').addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameActive || isPaused) return; fireProjectile(); });
+                document.getElementById('combat-special').addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameActive || isPaused) return; useSpecialAttack(); });
+
+                // Initial UI setup
+                coinDisplay.textContent = coins;
+                updateStoreUI(); // Ensure store UI reflects loaded data
+                if (isVertical) document.body.classList.add('vertical'); // Apply if default was changed
+
+            }); // End of preloadImages callback
+
+        }); // End of window.load
+    </script>
+</body>
+</html>
