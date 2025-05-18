@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DWHL Spin & Win</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            clip-path: polygon(0 0, 100% 0, 0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .wheel-section span {
+            position: absolute;
+            transform: rotate(45deg) translateX(70px) rotate(-45deg);
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+        
+        .spinning {
+            animation: spin 0.5s linear infinite;
+        }
+        
+        .currency-button.active {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+        }
+        
+        .confetti-animation {
+            animation: confetti-fall 3s ease-out forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Lottery styles */
+        .lottery-card {
+            position: relative;
+            width: 80px;
+            height: 120px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .lottery-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .lottery-card-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            transition: opacity 0.3s ease;
+        }
+        
+        .lottery-card-content {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1e3a8a, #1e40af);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: white;
+        }
+        
+        /* Tab styles */
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .tab-button.active {
+            color: #fbbf24;
+        }
+        
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #fbbf24;
+            border-radius: 3px 3px 0 0;
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b, #f97316);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-900 to-indigo-900 min-h-screen text-white font-sans overflow-x-hidden">
+    <!-- Main Game Container -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col items-center">
+            <h1 class="text-4xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-yellow-600">
+                <i class="fas fa-coins mr-2"></i> DWHL Spin & Win
+            </h1>
+            
+            <!-- Wallet Balance -->
+            <div class="bg-gray-800 bg-opacity-50 rounded-full px-6 py-3 mb-6 flex items-center shadow-lg">
+                <div class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center mr-3">
+                    <i class="fas fa-coins text-yellow-800"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-300">Your Balance</div>
+                    <div class="font-bold text-xl" id="wallet-balance">0 DWHL</div>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-gray-700 mb-8 w-full max-w-md">
+                <button class="tab-button active" id="tab-spin">Spin Wheel</button>
+                <button class="tab-button" id="tab-lottery">Lottery</button>
+                <button class="tab-button" id="tab-rewards">Rewards</button>
+            </div>
+            
+            <!-- Spin Wheel Content -->
+            <div id="spin-content" class="w-full">
+                <!-- Wheel Container -->
+                <div class="relative w-64 h-64 md:w-80 md:h-80 mb-8 mx-auto">
+                    <!-- Wheel -->
+                    <div id="spin-wheel" class="w-full h-full rounded-full bg-gray-800 relative overflow-hidden shadow-xl">
+                        <!-- Wheel segments will be generated by JavaScript -->
+                    </div>
+                    
+                    <!-- Wheel Center -->
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-400 border-4 border-yellow-400 shadow-md z-10"></div>
+                    
+                    <!-- Wheel Pointer -->
+                    <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-16 border-l-transparent border-r-transparent border-b-red-600 z-20"></div>
+                    
+                    <!-- Decorative Elements -->
+                    <div class="absolute -inset-4 rounded-full border-4 border-yellow-400 opacity-30 pointer-events-none"></div>
+                    <div class="absolute -inset-6 rounded-full border-2 border-yellow-200 opacity-20 pointer-events-none"></div>
+                </div>
+                
+                <!-- Spin Button -->
+                <button id="spin-button" class="px-8 py-3 mb-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 pulse w-full max-w-xs mx-auto block">
+                    SPIN THE WHEEL (5 DWHL)
+                </button>
+                
+                <!-- Result Display -->
+                <div class="w-full max-w-md bg-gray-800 bg-opacity-50 rounded-xl p-6 backdrop-blur-sm border border-gray-700 shadow-lg mx-auto">
+                    <div id="result-amount" class="text-3xl font-bold text-center mb-2 text-yellow-400 h-10"></div>
+                    <div id="result-message" class="text-center text-gray-200">
+                        Spin the wheel to win DWHL prizes!
+                    </div>
+                    <div id="spin-timer" class="text-center text-sm text-gray-400 mt-4"></div>
+                </div>
+            </div>
+            
+            <!-- Lottery Content -->
+            <div id="lottery-content" class="w-full hidden">
+                <div class="bg-gray-800 bg-opacity-50 rounded-xl p-6 mb-6 border border-gray-700 shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">DWHL Lottery</h3>
+                    <p class="text-center text-gray-300 mb-4">Current Jackpot: <span class="font-bold text-yellow-400" id="lottery-jackpot">0</span> DWHL</p>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar" id="lottery-progress" style="width: 0%"></div>
+                    </div>
+                    <p class="text-center text-xs text-gray-400 mb-6">Progress to next draw: <span id="lottery-progress-text">0%</span></p>
+                    
+                    <div class="flex justify-center gap-4 mb-8" id="lottery-cards">
+                        <!-- Lottery cards will be generated by JavaScript -->
+                    </div>
+                    
+                    <button id="buy-lottery-ticket" class="px-6 py-3 rounded-full bg-gradient-to-br from-green-600 to-green-700 text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 w-full max-w-xs mx-auto block">
+                        Buy Ticket (10 DWHL)
+                    </button>
+                </div>
+                
+                <div class="bg-gray-800 bg-opacity-50 rounded-xl p-6 border border-gray-700 shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">Previous Winners</h3>
+                    <div class="space-y-3" id="lottery-winners">
+                        <div class="text-center text-gray-400">No winners yet</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rewards Content -->
+            <div id="rewards-content" class="w-full hidden">
+                <div class="bg-gray-800 bg-opacity-50 rounded-xl p-6 border border-gray-700 shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">Daily Rewards</h3>
+                    
+                    <div class="grid grid-cols-7 gap-2 mb-6">
+                        <div class="bg-indigo-900 bg-opacity-50 rounded-lg p-2 text-center border border-indigo-700">
+                            <div class="text-xs text-gray-300">Day 1</div>
+                            <div class="font-bold text-yellow-400">5 DWHL</div>
+                        </div>
+                        <div class="bg-indigo-900 bg-opacity-50 rounded-lg p-2 text-center border border-indigo-700">
+                            <div class="text-xs text-gray-300">Day 2</div>
+                            <div class="font-bold text-yellow-400">10 DWHL</div>
+                        </div>
+                        <div class="bg-indigo-900 bg-opacity-50 rounded-lg p-2 text-center border border-indigo-700">
+                            <div class="text-xs text-gray-300">Day 3</div>
+                            <div class="font-bold text-yellow-400">15 DWHL</div>
+                        </div>
+                        <div class="bg-indigo-900 bg-opacity-50 rounded-lg p-2 text-center border border-indigo-700">
+                            <div class="text-xs text-gray-300">Day 4</div>
+                            <div class="font-bold text-yellow-400">20 DWHL</div>
+                        </div>
+                        <div class="bg-indigo-900 bg-opacity-50 rounded-lg p-2 text-center border border-indigo-700">
+                            <div class="text-xs text-gray-300">Day 5</div>
+                            <div class="font-bold text-yellow-400">30 DWHL</div>
+                        </div>
+                        <div class="bg-indigo-900 bg-opacity-50 rounded-lg p-2 text-center border border-indigo-700">
+                            <div class="text-xs text-gray-300">Day 6</div>
+                            <div class="font-bold text-yellow-400">50 DWHL</div>
+                        </div>
+                        <div class="bg-indigo-900 bg-opacity-50 rounded-lg p-2 text-center border border-indigo-700">
+                            <div class="text-xs text-gray-300">Day 7</div>
+                            <div class="font-bold text-yellow-400">100 DWHL</div>
+                        </div>
+                    </div>
+                    
+                    <button id="claim-reward" class="px-6 py-3 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 w-full max-w-xs mx-auto block">
+                        Claim Daily Reward
+                    </button>
+                    
+                    <p class="text-center text-xs text-gray-400 mt-4" id="next-reward-time">Next reward available in: 0h 0m 0s</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confetti Container -->
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none overflow-hidden z-50"></div>
+    
+    <!-- Lottery Win Modal -->
+    <div id="lottery-win-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-lottery-modal">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-center text-yellow-400">Congratulations!</h2>
+            <div class="text-center mb-6">
+                <p>You won the lottery jackpot!</p>
+                <p class="text-3xl font-bold my-4" id="lottery-win-amount">0 DWHL</p>
+                <p>Your winnings have been added to your balance.</p>
+            </div>
+            <button id="collect-lottery-win" class="px-6 py-2 rounded-full bg-gradient-to-br from-green-600 to-green-700 font-bold shadow-lg hover:shadow-xl transition-all duration-300 w-full">
+                Collect Prize
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            balance: 50, // Starting balance
+            currency: 'dwhl',
+            lastSpinTime: 0,
+            spinCooldown: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+            spinning: false,
+            lottery: {
+                jackpot: 0,
+                participants: 0,
+                lastDrawTime: 0,
+                drawInterval: 24 * 60 * 60 * 1000, // 24 hours
+                ticketPrice: 10,
+                winners: []
+            },
+            rewards: {
+                lastClaimTime: 0,
+                streak: 0,
+                rewardCooldown: 24 * 60 * 60 * 1000 // 24 hours
+            }
+        };
+        
+        // Prize values for DWHL (1-100)
+        const prizeValues = {
+            dwhl: [1, 2, 5, 10, 20, 50, 75, 100]
+        };
+        
+        // Colors for wheel sections
+        const wheelColors = [
+            'bg-gradient-to-br from-red-500 to-red-600',
+            'bg-gradient-to-br from-blue-500 to-blue-600',
+            'bg-gradient-to-br from-green-500 to-green-600',
+            'bg-gradient-to-br from-yellow-500 to-yellow-600',
+            'bg-gradient-to-br from-purple-500 to-purple-600',
+            'bg-gradient-to-br from-pink-500 to-pink-600',
+            'bg-gradient-to-br from-indigo-500 to-indigo-600',
+            'bg-gradient-to-br from-teal-500 to-teal-600'
+        ];
+        
+        // Initialize the wheel
+        function initWheel() {
+            const wheel = document.getElementById('spin-wheel');
+            wheel.innerHTML = '';
+            
+            const prizes = prizeValues.dwhl;
+            
+            for (let i = 0; i < 8; i++) {
+                const section = document.createElement('div');
+                section.className = `wheel-section ${wheelColors[i]}`;
+                section.style.transform = `rotate(${i * 45}deg)`;
+                
+                const span = document.createElement('span');
+                span.textContent = `${prizes[i]} DWHL`;
+                section.appendChild(span);
+                
+                section.dataset.value = prizes[i];
+                wheel.appendChild(section);
+            }
+        }
+        
+        // Spin the wheel
+        function spinWheel() {
+            if (gameState.spinning) return;
+            
+            // Check balance
+            if (gameState.balance < 5) {
+                showNotification("You need at least 5 DWHL to spin the wheel!");
+                return;
+            }
+            
+            // Check cooldown
+            const now = Date.now();
+            const timeRemaining = gameState.lastSpinTime + gameState.spinCooldown - now;
+            
+            if (timeRemaining > 0) {
+                updateTimerDisplay(timeRemaining);
+                return;
+            }
+            
+            // Deduct spin cost
+            updateBalance(-5);
+            
+            gameState.spinning = true;
+            const wheel = document.getElementById('spin-wheel');
+            const spinButton = document.getElementById('spin-button');
+            
+            // Disable button during spin
+            spinButton.disabled = true;
+            spinButton.classList.remove('pulse');
+            
+            // Show spinning message
+            document.getElementById('result-message').textContent = 'Spinning...';
+            document.getElementById('result-amount').textContent = '';
+            
+            // Add spinning animation
+            wheel.classList.add('spinning');
+            
+            // Determine the result (random for demo)
+            const prizes = prizeValues.dwhl;
+            const winningIndex = Math.floor(Math.random() * prizes.length);
+            const winningValue = prizes[winningIndex];
+            
+            // Calculate rotation (5 full rotations + random section)
+            const rotations = 5;
+            const winningAngle = 360 - (winningIndex * 45) + (Math.random() * 20 - 10);
+            const totalRotation = rotations * 360 + winningAngle;
+            
+            // Stop spinning after 3 seconds
+            setTimeout(() => {
+                wheel.classList.remove('spinning');
+                wheel.style.transform = `rotate(${totalRotation}deg)`;
+                wheel.style.transition = 'transform 3s cubic-bezier(0.17, 0.67, 0.83, 0.67)';
+                
+                // Show result after animation completes
+                setTimeout(() => {
+                    showResult(winningValue);
+                    gameState.spinning = false;
+                    gameState.lastSpinTime = Date.now();
+                    updateTimerDisplay(gameState.spinCooldown);
+                    
+                    // Re-enable button (with cooldown)
+                    spinButton.disabled = timeRemaining > 0;
+                    if (!spinButton.disabled) {
+                        spinButton.classList.add('pulse');
+                    }
+                    
+                    // Add winnings to balance
+                    updateBalance(winningValue);
+                }, 3500);
+            }, 3000);
+        }
+        
+        // Show the winning result
+        function showResult(value) {
+            const resultAmount = document.getElementById('result-amount');
+            const resultMessage = document.getElementById('result-message');
+            
+            resultAmount.textContent = `${value} DWHL`;
+            resultMessage.textContent = 'Congratulations! You won:';
+            
+            // Create confetti effect
+            createConfetti();
+            
+            // Special messages for big wins
+            if (value === Math.max(...prizeValues.dwhl)) {
+                resultMessage.textContent = 'JACKPOT! You won the biggest prize!';
+                resultAmount.classList.add('animate-bounce');
+                setTimeout(() => {
+                    resultAmount.classList.remove('animate-bounce');
+                }, 3000);
+            }
+        }
+        
+        // Update the timer display
+        function updateTimerDisplay(remainingTime) {
+            const timerElement = document.getElementById('spin-timer');
+            const spinButton = document.getElementById('spin-button');
+            
+            if (remainingTime <= 0) {
+                timerElement.textContent = 'Spin available now!';
+                spinButton.disabled = false;
+                spinButton.classList.add('pulse');
+                return;
+            }
+            
+            // Calculate hours, minutes, seconds
+            const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+            const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+            
+            timerElement.textContent = `Next spin in: ${hours}h ${minutes}m ${seconds}s`;
+            spinButton.disabled = true;
+            spinButton.classList.remove('pulse');
+            
+            // Update every second
+            setTimeout(() => {
+                updateTimerDisplay(remainingTime - 1000);
+            }, 1000);
+        }
+        
+        // Create confetti effect
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff', '#fff'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random properties
+                const size = Math.random() * 10 + 5;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const left = Math.random() * 100;
+                const delay = Math.random() * 3;
+                const duration = Math.random() * 2 + 2;
+                
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = color;
+                confetti.style.left = `${left}%`;
+                confetti.style.animationDelay = `${delay}s`;
+                confetti.style.animationDuration = `${duration}s`;
+                
+                // Random shape
+                if (Math.random() > 0.5) {
+                    confetti.style.borderRadius = '50%';
+                } else {
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                }
+                
+                container.appendChild(confetti);
+                
+                // Add animation class
+                setTimeout(() => {
+                    confetti.classList.add('confetti-animation');
+                    
+                    // Remove after animation
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, duration * 1000);
+                }, 10);
+            }
+        }
+        
+        // Update balance display
+        function updateBalance(amount) {
+            gameState.balance += amount;
+            document.getElementById('wallet-balance').textContent = `${gameState.balance} DWHL`;
+            saveGameState();
+            
+            if (amount > 0) {
+                showNotification(`+${amount} DWHL added to your balance!`);
+            }
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            // In a real app, you would show a toast notification
+            console.log(message);
+            alert(message);
+        }
+        
+        // Initialize lottery
+        function initLottery() {
+            updateLotteryDisplay();
+            createLotteryCards();
+            
+            // Update lottery progress every second
+            setInterval(updateLotteryProgress, 1000);
+        }
+        
+        // Update lottery display
+        function updateLotteryDisplay() {
+            document.getElementById('lottery-jackpot').textContent = gameState.lottery.jackpot;
+            updateLotteryProgress();
+        }
+        
+        // Update lottery progress
+        function updateLotteryProgress() {
+            const now = Date.now();
+            const nextDrawTime = gameState.lottery.lastDrawTime + gameState.lottery.drawInterval;
+            const timeRemaining = nextDrawTime - now;
+            
+            if (timeRemaining <= 0) {
+                // Time to draw the lottery
+                drawLottery();
+                return;
+            }
+            
+            const progress = 100 - (timeRemaining / gameState.lottery.drawInterval * 100);
+            document.getElementById('lottery-progress').style.width = `${progress}%`;
+            document.getElementById('lottery-progress-text').textContent = `${Math.round(progress)}%`;
+            
+            // Update next draw time
+            const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+            
+            // Update button state
+            const buyButton = document.getElementById('buy-lottery-ticket');
+            if (gameState.balance < gameState.lottery.ticketPrice) {
+                buyButton.disabled = true;
+                buyButton.classList.add('opacity-50');
+            } else {
+                buyButton.disabled = false;
+                buyButton.classList.remove('opacity-50');
+            }
+        }
+        
+        // Create lottery cards
+        function createLotteryCards() {
+            const container = document.getElementById('lottery-cards');
+            container.innerHTML = '';
+            
+            // Create 3 lottery cards
+            for (let i = 0; i < 3; i++) {
+                const card = document.createElement('div');
+                card.className = 'lottery-card';
+                card.dataset.index = i;
+                
+                const cover = document.createElement('div');
+                cover.className = 'lottery-card-cover';
+                cover.innerHTML = '<i class="fas fa-question"></i>';
+                
+                const content = document.createElement('div');
+                content.className = 'lottery-card-content';
+                content.textContent = '?';
+                
+                card.appendChild(content);
+                card.appendChild(cover);
+                container.appendChild(card);
+                
+                // Add click event to scratch card
+                card.addEventListener('click', function() {
+                    scratchCard(this);
+                });
+            }
+        }
+        
+        // Buy lottery ticket
+        function buyLotteryTicket() {
+            if (gameState.balance < gameState.lottery.ticketPrice) {
+                showNotification(`You need at least ${gameState.lottery.ticketPrice} DWHL to buy a lottery ticket!`);
+                return;
+            }
+            
+            // Deduct ticket price
+            updateBalance(-gameState.lottery.ticketPrice);
+            
+            // Add to lottery pool
+            gameState.lottery.jackpot += gameState.lottery.ticketPrice;
+            gameState.lottery.participants++;
+            
+            // Update display
+            updateLotteryDisplay();
+            
+            showNotification(`You bought a lottery ticket for ${gameState.lottery.ticketPrice} DWHL! Good luck!`);
+        }
+        
+        // Draw lottery
+        function drawLottery() {
+            if (gameState.lottery.participants === 0) {
+                // No participants, reset lottery
+                gameState.lottery.lastDrawTime = Date.now();
+                return;
+            }
+            
+            // Select a random winner (in a real app, this would be server-side)
+            const winner = `User${Math.floor(Math.random() * 1000)}`;
+            const winAmount = gameState.lottery.jackpot;
+            
+            // Add to winners list
+            gameState.lottery.winners.unshift({
+                winner: winner,
+                amount: winAmount,
+                time: Date.now()
+            });
+            
+            // Update winners display
+            updateWinnersList();
+            
+            // Check if current user won (demo only)
+            if (Math.random() > 0.7) { // 30% chance for demo
+                showLotteryWin(winAmount);
+            }
+            
+            // Reset lottery
+            gameState.lottery.jackpot = 0;
+            gameState.lottery.participants = 0;
+            gameState.lottery.lastDrawTime = Date.now();
+            
+            // Update display
+            updateLotteryDisplay();
+        }
+        
+        // Show lottery win modal
+        function showLotteryWin(amount) {
+            document.getElementById('lottery-win-amount').textContent = `${amount} DWHL`;
+            document.getElementById('lottery-win-modal').style.display = 'flex';
+        }
+        
+        // Collect lottery win
+        function collectLotteryWin() {
+            const amount = parseInt(document.getElementById('lottery-win-amount').textContent);
+            updateBalance(amount);
+            document.getElementById('lottery-win-modal').style.display = 'none';
+            showNotification(`Congratulations! You won ${amount} DWHL in the lottery!`);
+        }
+        
+        // Update winners list
+        function updateWinnersList() {
+            const container = document.getElementById('lottery-winners');
+            container.innerHTML = '';
+            
+            if (gameState.lottery.winners.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400">No winners yet</div>';
+                return;
+            }
+            
+            // Show last 5 winners
+            const recentWinners = gameState.lottery.winners.slice(0, 5);
+            
+            recentWinners.forEach(winner => {
+                const winnerElement = document.createElement('div');
+                winnerElement.className = 'flex justify-between items-center py-2 border-b border-gray-700';
+                
+                const winnerName = document.createElement('div');
+                winnerName.className = 'font-medium';
+                winnerName.textContent = winner.winner;
+                
+                const winnerAmount = document.createElement('div');
+                winnerAmount.className = 'font-bold text-yellow-400';
+                winnerAmount.textContent = `${winner.amount} DWHL`;
+                
+                winnerElement.appendChild(winnerName);
+                winnerElement.appendChild(winnerAmount);
+                container.appendChild(winnerElement);
+            });
+        }
+        
+        // Initialize rewards
+        function initRewards() {
+            updateRewardsDisplay();
+        }
+        
+        // Update rewards display
+        function updateRewardsDisplay() {
+            const now = Date.now();
+            const nextRewardTime = gameState.rewards.lastClaimTime + gameState.rewards.rewardCooldown;
+            const timeRemaining = nextRewardTime - now;
+            
+            if (timeRemaining <= 0) {
+                document.getElementById('claim-reward').disabled = false;
+                document.getElementById('next-reward-time').textContent = 'Reward available now!';
+                return;
+            }
+            
+            // Update next reward time
+            const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+            
+            document.getElementById('next-reward-time').textContent = `Next reward available in: ${hours}h ${minutes}m ${seconds}s`;
+            
+            // Update every second
+            setTimeout(updateRewardsDisplay, 1000);
+        }
+        
+        // Claim daily reward
+        function claimDailyReward() {
+            const now = Date.now();
+            const lastClaimTime = gameState.rewards.lastClaimTime;
+            
+            // Check if reward is available
+            if (now - lastClaimTime < gameState.rewards.rewardCooldown) {
+                showNotification("You've already claimed your daily reward today!");
+                return;
+            }
+            
+            // Calculate reward amount based on streak
+            let rewardAmount = 0;
+            if (gameState.rewards.streak < 7) {
+                gameState.rewards.streak++;
+            }
+            
+            switch (gameState.rewards.streak) {
+                case 1: rewardAmount = 5; break;
+                case 2: rewardAmount = 10; break;
+                case 3: rewardAmount = 15; break;
+                case 4: rewardAmount = 20; break;
+                case 5: rewardAmount = 30; break;
+                case 6: rewardAmount = 50; break;
+                case 7: rewardAmount = 100; break;
+            }
+            
+            // Update last claim time
+            gameState.rewards.lastClaimTime = now;
+            
+            // Add reward to balance
+            updateBalance(rewardAmount);
+            
+            showNotification(`You claimed ${rewardAmount} DWHL as your daily reward (Day ${gameState.rewards.streak})!`);
+            
+            // Update display
+            updateRewardsDisplay();
+        }
+        
+        // Save game state to localStorage
+        function saveGameState() {
+            localStorage.setItem('dwhlGameState', JSON.stringify(gameState));
+        }
+        
+        // Load game state from localStorage
+        function loadGameState() {
+            const savedState = localStorage.getItem('dwhlGameState');
+            if (savedState) {
+                Object.assign(gameState, JSON.parse(savedState));
+                document.getElementById('wallet-balance').textContent = `${gameState.balance} DWHL`;
+            }
+        }
+        
+        // Switch tabs
+        function switchTab(tabId) {
+            // Hide all content
+            document.getElementById('spin-content').classList.add('hidden');
+            document.getElementById('lottery-content').classList.add('hidden');
+            document.getElementById('rewards-content').classList.add('hidden');
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected content and mark tab as active
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+        }
+        
+        // Initialize the game
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved game state
+            loadGameState();
+            
+            // Create the wheel
+            initWheel();
+            
+            // Initialize lottery
+            initLottery();
+            
+            // Initialize rewards
+            initRewards();
+            
+            // Spin button
+            document.getElementById('spin-button').addEventListener('click', spinWheel);
+            
+            // Buy lottery ticket button
+            document.getElementById('buy-lottery-ticket').addEventListener('click', buyLotteryTicket);
+            
+            // Claim reward button
+            document.getElementById('claim-reward').addEventListener('click', claimDailyReward);
+            
+            // Collect lottery win button
+            document.getElementById('collect-lottery-win').addEventListener('click', collectLotteryWin);
+            
+            // Close lottery modal
+            document.getElementById('close-lottery-modal').addEventListener('click', () => {
+                document.getElementById('lottery-win-modal').style.display = 'none';
+            });
+            
+            // Tab navigation
+            document.getElementById('tab-spin').addEventListener('click', () => switchTab('tab-spin'));
+            document.getElementById('tab-lottery').addEventListener('click', () => switchTab('tab-lottery'));
+            document.getElementById('tab-rewards').addEventListener('click', () => switchTab('tab-rewards'));
+            
+            // Initialize timer display
+            updateTimerDisplay(gameState.lastSpinTime + gameState.spinCooldown - Date.now());
+        });
+    </script>
+</body>
+</html>
