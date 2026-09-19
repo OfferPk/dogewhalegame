@@ -1,0 +1,19 @@
+{
+  "name": "dogewhalegame",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Doge Whale Game — static HTML/Canvas game for DWHL holders",
+  "scripts": {
+    "start": "npx --yes serve .",
+    "serve": "npx --yes serve .",
+    "python": "python3 -m http.server 8080"
+  },
+  "keywords": [
+    "game",
+    "canvas",
+    "html5",
+    "doge",
+    "dwhl"
+  ],
+  "license": "UNLICENSED"
+}
