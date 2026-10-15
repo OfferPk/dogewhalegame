@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Doge Whale Game</title>
     <style>
         body {
@@ -399,6 +399,7 @@
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="assets/game-ui-polish.css">
 </head>
 <body>
     <header>
@@ -407,6 +408,9 @@
             <button class="nav-button" id="play-button">Play</button>
             <button class="nav-button" id="store-button">Store</button>
             <button class="nav-button" id="leaderboard-button">Leaderboard</button>
+            <button type="button" class="nav-button" id="orientation-toggle" aria-label="Toggle game orientation" aria-pressed="false" title="Toggle game orientation">
+                <i class="fas fa-mobile-alt" aria-hidden="true"></i><span class="orientation-label">Rotate</span>
+            </button>
         </div>
         <div class="user-info">
             <span>Guest</span>
@@ -419,13 +423,13 @@
     
     <main>
         <div id="game-container">
-            <canvas id="game-canvas"></canvas>
+            <canvas id="game-canvas" role="img" aria-label="Game playfield. Use Space or Arrow Up to flap, Arrow Down to dive, F to fire, and S for a special attack when charged."></canvas>
             
             <div id="hud">
-                <div class="bar-container">
+                <div class="bar-container meter-container" role="meter" aria-label="Hull integrity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" data-label="HULL">
                     <div id="health-bar"></div>
                 </div>
-                <div class="bar-container">
+                <div class="bar-container meter-container" role="meter" aria-label="Special attack charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-label="POWER">
                     <div id="power-bar"></div>
                 </div>
             </div>
@@ -434,19 +438,20 @@
             <div id="combo-display">Combo x1</div>
             <div id="power-up-notification"></div>
             
-            <div id="mobile-controls">
-                <div class="mobile-button" id="mobile-up"><i class="fas fa-arrow-up"></i></div>
-                <div class="mobile-button" id="mobile-down"><i class="fas fa-arrow-down"></i></div>
+            <div id="mobile-controls" role="group" aria-label="Movement controls">
+                <button type="button" class="mobile-button" id="mobile-up" aria-label="Flap upward (Space or Up Arrow)" title="Flap upward (Space or Up Arrow)"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>
+                <button type="button" class="mobile-button" id="mobile-down" aria-label="Dive (Down Arrow)" title="Dive (Down Arrow)"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>
             </div>
             
-            <div id="combat-controls">
-                <div class="combat-button" id="combat-fire"><i class="fas fa-bolt"></i></div>
-                <div class="combat-button" id="combat-special"><i class="fas fa-star"></i></div>
+            <div id="combat-controls" role="group" aria-label="Combat controls">
+                <button type="button" class="combat-button" id="combat-fire" aria-label="Fire (F)" title="Fire (F)"><i class="fas fa-bolt" aria-hidden="true"></i></button>
+                <button type="button" class="combat-button" id="combat-special" aria-label="Special attack (S)" title="Special attack (S)"><i class="fas fa-star" aria-hidden="true"></i></button>
             </div>
             
             <div class="overlay active" id="start-overlay">
                 <h2>Doge Whale Game</h2>
                 <p>Navigate through pipes and defeat enemy whales!</p>
+                <p class="control-hint">Space / ↑ flap · ↓ dive · F fire · S special attack when charged</p>
                 <button class="button" id="start-button">Start Game</button>
             </div>
             
@@ -460,10 +465,6 @@
             <div id="cloud-container"></div>
         </div>
     </main>
-    
-    <div id="orientation-toggle">
-        <i class="fas fa-mobile-alt"></i>
-    </div>
     
     <script>
         // Animation scripts
@@ -955,7 +956,8 @@
         let combo = 0;
         let gameSpeed = 2;
         let gravity = 0.5;
-        let isVertical = true; // Default to vertical orientation
+        let isVertical = window.matchMedia('(orientation: portrait)').matches;
+        document.body.classList.toggle('vertical', isVertical);
 
         // Game objects
         const canvas = document.getElementById('game-canvas');
@@ -972,6 +974,7 @@
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const orientationToggle = document.getElementById('orientation-toggle');
+        orientationToggle.setAttribute('aria-pressed', String(isVertical));
 
         // Character and enemy images
         const playerImage = new Image();
@@ -1056,8 +1059,8 @@
             
             // Update UI
             scoreDisplay.textContent = score;
-            healthBar.style.width = '100%';
-            powerBar.style.width = '0%';
+            updateHealthBar();
+            updatePowerBar();
             comboDisplay.style.opacity = '0';
             
             // Hide overlays
@@ -2185,13 +2188,16 @@
 
         // Update health bar
         function updateHealthBar() {
-            healthBar.style.width = `${Math.max(0, health)}%`;
+            const currentHealth = Math.max(0, Math.min(100, health));
+            healthBar.style.width = `${currentHealth}%`;
+            healthBar.parentElement.setAttribute('aria-valuenow', String(Math.round(currentHealth)));
         }
 
         // Update power bar
         function updatePowerBar() {
             power = Math.min(100, power);
             powerBar.style.width = `${power}%`;
+            powerBar.parentElement.setAttribute('aria-valuenow', String(Math.round(power)));
         }
 
         // Update combo display
@@ -2383,6 +2389,7 @@
         // Toggle orientation
         function toggleOrientation() {
             isVertical = !isVertical;
+            orientationToggle.setAttribute('aria-pressed', String(isVertical));
             
             if (isVertical) {
                 document.body.classList.add('vertical');
@@ -2442,23 +2449,23 @@
             });
             
             // Mobile controls
-            document.getElementById('mobile-up').addEventListener('touchstart', () => {
+            document.getElementById('mobile-up').addEventListener('click', () => {
                 if (!gameActive) return;
                 player.velocity = -8;
                 player.isJumping = true;
             });
             
-            document.getElementById('mobile-down').addEventListener('touchstart', () => {
+            document.getElementById('mobile-down').addEventListener('click', () => {
                 if (!gameActive) return;
                 player.velocity = 8;
             });
             
-            document.getElementById('combat-fire').addEventListener('touchstart', () => {
+            document.getElementById('combat-fire').addEventListener('click', () => {
                 if (!gameActive) return;
                 fireProjectile();
             });
             
-            document.getElementById('combat-special').addEventListener('touchstart', () => {
+            document.getElementById('combat-special').addEventListener('click', () => {
                 if (!gameActive) return;
                 useSpecialAttack();
             });
